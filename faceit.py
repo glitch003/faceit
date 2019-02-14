@@ -15,13 +15,10 @@ from pathlib import Path
 import sys
 sys.path.append('faceswap')
 
-from lib.utils import FullHelpArgumentParser
-from scripts.extract import ExtractTrainingData
-from scripts.train import TrainingProcessor
-from scripts.convert import ConvertImage
-from lib.faces_detect import detect_faces
-from plugins.PluginLoader import PluginLoader
-from lib.FaceFilter import FaceFilter
+from lib.cli import FullHelpArgumentParser
+from scripts.extract import Extract
+from scripts.train import Train
+from scripts.convert import Convert
 
 class FaceIt:
     VIDEO_PATH = 'data/videos'
@@ -194,107 +191,8 @@ class FaceIt:
         self._faceswap.train(self._model_person_data_path(self._person_a), self._model_person_data_path(self._person_b), self._model_path(use_gan), use_gan)
 
     def convert(self, video_file, swap_model = False, duration = None, start_time = None, use_gan = False, face_filter = False, photos = True, crop_x = None, width = None, side_by_side = False):
-        # Magic incantation to not have tensorflow blow up with an out of memory error.
-        import tensorflow as tf
-        import keras.backend.tensorflow_backend as K
-        config = tf.ConfigProto()
-        config.gpu_options.allow_growth = True
-        config.gpu_options.visible_device_list="0"
-        K.set_session(tf.Session(config=config))
-
-        # Load model
-        model_name = "Original"
-        converter_name = "Masked"
-        if use_gan:
-            model_name = "GAN"
-            converter_name = "GAN"
-        model = PluginLoader.get_model(model_name)(Path(self._model_path(use_gan)))
-        if not model.load(swap_model):
-            print('model Not Found! A valid model must be provided to continue!')
-            exit(1)
-
-        # Load converter
-        converter = PluginLoader.get_converter(converter_name)
-        converter = converter(model.converter(False),
-                              blur_size=8,
-                              seamless_clone=True,
-                              mask_type="facehullandrect",
-                              erosion_kernel_size=None,
-                              smooth_mask=True,
-                              avg_color_adjust=True)
-
-        # Load face filter
-        filter_person = self._person_a
-        if swap_model:
-            filter_person = self._person_b
-        filter = FaceFilter(self._people[filter_person]['faces'])
-
-        # Define conversion method per frame
-        def _convert_frame(frame, convert_colors = True):
-            if convert_colors:
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) # Swap RGB to BGR to work with OpenCV
-            for face in detect_faces(frame, "cnn"):
-                if (not face_filter) or (face_filter and filter.check(face)):
-                    frame = converter.patch_image(frame, face)
-                    frame = frame.astype(numpy.float32)
-            if convert_colors:                    
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) # Swap RGB to BGR to work with OpenCV
-            return frame
-        def _convert_helper(get_frame, t):
-            return _convert_frame(get_frame(t))
-
-        media_path = self._video_path({ 'name' : video_file })
-        if not photos:
-            # Process video; start loading the video clip
-            video = VideoFileClip(media_path)
-
-            # If a duration is set, trim clip
-            if duration:
-                video = video.subclip(start_time, start_time + duration)
-            
-            # Resize clip before processing
-            if width:
-                video = video.resize(width = width)
-
-            # Crop clip if desired
-            if crop_x:
-                video = video.fx(crop, x2 = video.w / 2)
-
-            # Kick off convert frames for each frame
-            new_video = video.fl(_convert_helper)
-
-            # Stack clips side by side
-            if side_by_side:
-                def add_caption(caption, clip):
-                    text = (TextClip(caption, font='Amiri-regular', color='white', fontsize=80).
-                            margin(40).
-                            set_duration(clip.duration).
-                            on_color(color=(0,0,0), col_opacity=0.6))
-                    return CompositeVideoClip([clip, text])
-                video = add_caption("Original", video)
-                new_video = add_caption("Swapped", new_video)                
-                final_video = clips_array([[video], [new_video]])
-            else:
-                final_video = new_video
-
-            # Resize clip after processing
-            #final_video = final_video.resize(width = (480 * 2))
-
-            # Write video
-            output_path = os.path.join(self.OUTPUT_PATH, video_file)
-            final_video.write_videofile(output_path, rewrite_audio = True)
-            
-            # Clean up
-            del video
-            del new_video
-            del final_video
-        else:
-            # Process a directory of photos
-            for face_file in os.listdir(media_path):
-                face_path = os.path.join(media_path, face_file)
-                image = cv2.imread(face_path)
-                image = _convert_frame(image, convert_colors = False)
-                cv2.imwrite(os.path.join(self.OUTPUT_PATH, face_file), image)
+        print('converting')
+	
 
 class FaceSwapInterface:
     def __init__(self):
@@ -302,8 +200,15 @@ class FaceSwapInterface:
         self._subparser = self._parser.add_subparsers()
 
     def extract(self, input_dir, output_dir, filter_path):
-        extract = ExtractTrainingData(
+        extract = Extract(
             self._subparser, "extract", "Extract the faces from a pictures.")
+        args_str = "extract --input-dir {} --output-dir {} --processes 1 --detector cnn --filter {}"
+        args_str = args_str.format(input_dir, output_dir, filter_path)
+        self._run_script(args_str)
+
+    def convert(self, input_dir, output_dir, model_dir, filter_path):
+        convert = Convert(
+            self._subparser, "convert", "Convert the thing")
         args_str = "extract --input-dir {} --output-dir {} --processes 1 --detector cnn --filter {}"
         args_str = args_str.format(input_dir, output_dir, filter_path)
         self._run_script(args_str)
@@ -312,7 +217,7 @@ class FaceSwapInterface:
         model_type = "Original"
         if gan:
             model_type = "GAN"
-        train = TrainingProcessor(
+        train = Train(
             self._subparser, "train", "This command trains the model for the two faces A and B.")
         args_str = "train --input-A {} --input-B {} --model-dir {} --trainer {} --batch-size {} --write-image"
         args_str = args_str.format(input_a_dir, input_b_dir, model_dir, model_type, 512)
