@@ -324,21 +324,29 @@ class FaceSwapInterface:
 
 
 if __name__ == '__main__':
-    faceit = FaceIt('fallon_to_oliver', 'fallon', 'oliver')
-    faceit.add_video('oliver', 'oliver_trumpcard.mp4', 'https://www.youtube.com/watch?v=JlxQ3IUWT0I')
-    faceit.add_video('oliver', 'oliver_taxreform.mp4', 'https://www.youtube.com/watch?v=g23w7WPSaU8')
-    faceit.add_video('oliver', 'oliver_zazu.mp4', 'https://www.youtube.com/watch?v=Y0IUPwXSQqg')
-    faceit.add_video('oliver', 'oliver_pastor.mp4', 'https://www.youtube.com/watch?v=mUndxpbufkg')
-    faceit.add_video('oliver', 'oliver_cookie.mp4', 'https://www.youtube.com/watch?v=H916EVndP_A')
-    faceit.add_video('oliver', 'oliver_lorelai.mp4', 'https://www.youtube.com/watch?v=G1xP2f1_1Jg')
-    faceit.add_video('fallon', 'fallon_mom.mp4', 'https://www.youtube.com/watch?v=gjXrm2Q-te4')
-    faceit.add_video('fallon', 'fallon_charlottesville.mp4', 'https://www.youtube.com/watch?v=E9TJsw67OmE')
-    faceit.add_video('fallon', 'fallon_dakota.mp4', 'https://www.youtube.com/watch?v=tPtMP_NAMz0')
-    faceit.add_video('fallon', 'fallon_single.mp4', 'https://www.youtube.com/watch?v=xfFVuXN0FSI')
-    faceit.add_video('fallon', 'fallon_sesamestreet.mp4', 'https://www.youtube.com/watch?v=SHogg7pJI_M')
-    faceit.add_video('fallon', 'fallon_emmastone.mp4', 'https://www.youtube.com/watch?v=bLBSoC_2IY8')
-    faceit.add_video('fallon', 'fallon_xfinity.mp4', 'https://www.youtube.com/watch?v=7JwBBZRLgkM')
-    faceit.add_video('fallon', 'fallon_bank.mp4', 'https://www.youtube.com/watch?v=q-0hmYHWVgE')
+
+    faceit = FaceIt('trump_to_adler', 'trump', 'adler')
+
+    faceit.add_video('trump', 'trump_not_happy.mp4', 'https://www.youtube.com/watch?v=eWrZHR1_aU0')
+    faceit.add_video('trump', 'trump_tax_cut.mp4', 'https://www.youtube.com/watch?v=AVlGUSvypjA')
+    faceit.add_video('trump', 'trump_comp.mp4', 'https://www.youtube.com/watch?v=kAIfU5RBBso')
+    faceit.add_video('trump', 'trump_awkward.mp4', 'https://www.youtube.com/watch?v=vlxmiFF85yU')
+    faceit.add_video('trump', 'trump_jabs.mp4', 'https://www.youtube.com/watch?v=WxDGafQQPjM')
+    faceit.add_video('trump', 'trump_most_memorable.mp4', 'https://www.youtube.com/watch?v=_Dyx-IQxcus')
+    faceit.add_video('trump', 'trump_expert.mp4', 'https://www.youtube.com/watch?v=5GqJna9hpTE')
+    faceit.add_video('trump', 'trump_vs_media.mp4', 'https://www.youtube.com/watch?v=jtl5XK7QP38')
+    faceit.add_video('trump', 'trump_laura_ingrham.mp4', 'https://www.youtube.com/watch?v=y61Z0gLrOx4')
+
+
+
+    faceit.add_video('adler', 'adler_guns_and_roses.mp4', 'https://www.youtube.com/watch?v=HJ3J1bmsqck')
+    faceit.add_video('adler', 'adler_amazon.mp4', 'https://www.youtube.com/watch?v=9sBBINBjDp4')
+    faceit.add_video('adler', 'adler_conf.mp4', 'https://www.youtube.com/watch?v=TI-EqKCESbw')
+    faceit.add_video('adler', 'adler_mayor.mp4', 'https://www.youtube.com/watch?v=p8lkaOeAVDQ')
+    faceit.add_video('adler', 'adler_boil.mp4', 'https://www.youtube.com/watch?v=S1UEbRSKyVM')
+    faceit.add_video('adler', 'adler_kvue.mp4', 'https://www.youtube.com/watch?v=ZtIKKTKF95I')
+    faceit.add_video('adler', 'adler_fc.mp4', 'https://www.youtube.com/watch?v=kos21rHIOgQ')
+
     FaceIt.add_model(faceit)
 
     parser = argparse.ArgumentParser()
