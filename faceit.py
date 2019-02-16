@@ -15,8 +15,7 @@ from pathlib import Path
 import sys
 sys.path.append('faceswap')
 
-from lib.cli import FullHelpArgumentParser
-from scripts.extract import Extract
+import lib.cli as cli
 from scripts.train import Train
 from scripts.convert import Convert
 
@@ -196,19 +195,39 @@ class FaceIt:
 
 class FaceSwapInterface:
     def __init__(self):
-        self._parser = FullHelpArgumentParser()
-        self._subparser = self._parser.add_subparsers()
+        print("initing faceswapinterface")
+
+    def bad_args(args):
+        """ Print help on bad arguments """
+        PARSER.print_help()
+        exit(0)
 
     def extract(self, input_dir, output_dir, filter_path):
-        extract = Extract(
-            self._subparser, "extract", "Extract the faces from a pictures.")
-        args_str = "extract --input-dir {} --output-dir {} --processes 1 --detector cnn --filter {}"
+        args_str = "extract --input-dir {} --output-dir {} --detector mtcnn -mp -A fan -D mtcnn --filter {}"
         args_str = args_str.format(input_dir, output_dir, filter_path)
-        self._run_script(args_str)
+        print("args str: {}".format(args_str))
+
+        PARSER = cli.FullHelpArgumentParser()
+        SUBPARSER = PARSER.add_subparsers()
+        EXTRACT = cli.ExtractArgs(SUBPARSER,
+                                  "extract",
+                                  "Extract the faces from pictures")
+        TRAIN = cli.TrainArgs(SUBPARSER,
+                              "train",
+                              "This command trains the model for the two faces A and B")
+        CONVERT = cli.ConvertArgs(SUBPARSER,
+                                  "convert",
+                                  "Convert a source image to a new one with the face swapped")
+        GUI = cli.GuiArgs(SUBPARSER,
+                          "gui",
+                          "Launch the Faceswap Graphical User Interface")
+        PARSER.set_defaults(func=self.bad_args)
+        ARGUMENTS = PARSER.parse_args(args_str.split(' '))
+        ARGUMENTS.func(ARGUMENTS)
+
 
     def convert(self, input_dir, output_dir, model_dir, filter_path):
-        convert = Convert(
-            self._subparser, "convert", "Convert the thing")
+        convert = Convert(self._subparser)
         args_str = "extract --input-dir {} --output-dir {} --processes 1 --detector cnn --filter {}"
         args_str = args_str.format(input_dir, output_dir, filter_path)
         self._run_script(args_str)
@@ -232,24 +251,10 @@ if __name__ == '__main__':
 
     faceit = FaceIt('trump_to_adler', 'trump', 'adler')
 
-    faceit.add_video('trump', 'trump_not_happy.mp4', 'https://www.youtube.com/watch?v=eWrZHR1_aU0')
-    faceit.add_video('trump', 'trump_tax_cut.mp4', 'https://www.youtube.com/watch?v=AVlGUSvypjA')
-    faceit.add_video('trump', 'trump_comp.mp4', 'https://www.youtube.com/watch?v=kAIfU5RBBso')
-    faceit.add_video('trump', 'trump_awkward.mp4', 'https://www.youtube.com/watch?v=vlxmiFF85yU')
-    faceit.add_video('trump', 'trump_jabs.mp4', 'https://www.youtube.com/watch?v=WxDGafQQPjM')
-    faceit.add_video('trump', 'trump_most_memorable.mp4', 'https://www.youtube.com/watch?v=_Dyx-IQxcus')
-    faceit.add_video('trump', 'trump_expert.mp4', 'https://www.youtube.com/watch?v=5GqJna9hpTE')
     faceit.add_video('trump', 'trump_vs_media.mp4', 'https://www.youtube.com/watch?v=jtl5XK7QP38')
-    faceit.add_video('trump', 'trump_laura_ingrham.mp4', 'https://www.youtube.com/watch?v=y61Z0gLrOx4')
 
 
 
-    faceit.add_video('adler', 'adler_guns_and_roses.mp4', 'https://www.youtube.com/watch?v=HJ3J1bmsqck')
-    faceit.add_video('adler', 'adler_amazon.mp4', 'https://www.youtube.com/watch?v=9sBBINBjDp4')
-    faceit.add_video('adler', 'adler_conf.mp4', 'https://www.youtube.com/watch?v=TI-EqKCESbw')
-    faceit.add_video('adler', 'adler_mayor.mp4', 'https://www.youtube.com/watch?v=p8lkaOeAVDQ')
-    faceit.add_video('adler', 'adler_boil.mp4', 'https://www.youtube.com/watch?v=S1UEbRSKyVM')
-    faceit.add_video('adler', 'adler_kvue.mp4', 'https://www.youtube.com/watch?v=ZtIKKTKF95I')
     faceit.add_video('adler', 'adler_fc.mp4', 'https://www.youtube.com/watch?v=kos21rHIOgQ')
 
     FaceIt.add_model(faceit)
