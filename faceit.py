@@ -1,4 +1,5 @@
 import os
+import subprocess
 from argparse import Namespace
 import argparse
 import youtube_dl
@@ -203,10 +204,43 @@ class FaceSwapInterface:
         exit(0)
 
     def extract(self, input_dir, output_dir, filter_path):
-        args_str = "extract --input-dir {} --output-dir {} --detector mtcnn -mp -A fan -D mtcnn --filter {}"
+        args_str = "python3 faceswap/faceswap.py extract --input-dir {} --output-dir {} --detector mtcnn -mp -A fan --filter {}"
         args_str = args_str.format(input_dir, output_dir, filter_path)
         print("args str: {}".format(args_str))
+        args_array = args_str.split(" ")
+        print("args array: {}".format(args_array))
+        for line in self._execute(args_array):
+            print(line, end="")
 
+    def convert(self, input_dir, output_dir, model_dir, filter_path):
+        args_str = "convert -i {} -o {} -m {} -b 4 -c Masked -S -M facehullandrect -g 4 -e 2 -t OriginalHighRes"
+        args_str = args_str.format(input_dir, output_dir, filter_path)
+        print("args str: {}".format(args_str))
+        args_array = args_str.split(" ")
+        print("args array: {}".format(args_array))
+        for line in self._execute(args_array):
+            print(line, end="")
+
+
+    def train(self, input_a_dir, input_b_dir, model_dir):
+        args_str = "train --input-A {} --input-B {} --model-dir {} --trainer OriginalHighRes -g 4 --batch-size 512"
+        args_str = args_str.format(input_a_dir, input_b_dir, model_dir)
+        print("args str: {}".format(args_str))
+        args_array = args_str.split(" ")
+        print("args array: {}".format(args_array))
+        for line in self._execute(args_array):
+            print(line, end="")
+
+    def _execute(self, cmd):
+        popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
+        for stdout_line in iter(popen.stdout.readline, ""):
+            yield stdout_line 
+        popen.stdout.close()
+        return_code = popen.wait()
+        if return_code:
+            raise subprocess.CalledProcessError(return_code, cmd)
+
+    def _run_script(self, args_str):
         PARSER = cli.FullHelpArgumentParser()
         SUBPARSER = PARSER.add_subparsers()
         EXTRACT = cli.ExtractArgs(SUBPARSER,
@@ -225,26 +259,6 @@ class FaceSwapInterface:
         ARGUMENTS = PARSER.parse_args(args_str.split(' '))
         ARGUMENTS.func(ARGUMENTS)
 
-
-    def convert(self, input_dir, output_dir, model_dir, filter_path):
-        convert = Convert(self._subparser)
-        args_str = "extract --input-dir {} --output-dir {} --processes 1 --detector cnn --filter {}"
-        args_str = args_str.format(input_dir, output_dir, filter_path)
-        self._run_script(args_str)
-
-    def train(self, input_a_dir, input_b_dir, model_dir, gan = False):
-        model_type = "Original"
-        if gan:
-            model_type = "GAN"
-        train = Train(
-            self._subparser, "train", "This command trains the model for the two faces A and B.")
-        args_str = "train --input-A {} --input-B {} --model-dir {} --trainer {} --batch-size {} --write-image"
-        args_str = args_str.format(input_a_dir, input_b_dir, model_dir, model_type, 512)
-        self._run_script(args_str)
-
-    def _run_script(self, args_str):
-        args = self._parser.parse_args(args_str.split(' '))
-        args.func(args)
 
 
 if __name__ == '__main__':
